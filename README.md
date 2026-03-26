@@ -1,6 +1,6 @@
 # 현상 Portfolio
 
-## 1. 라바, 블레이돌 소스코드 일부
+## 1. 슬라임
 https://github.com/jamhyunsang/Portfolio/tree/master/Code
 
 ## 2. 알고리즘 문제 풀이
