@@ -10,6 +10,9 @@ public static class ClientDefine
     public static readonly string LANGUAGE_KEY = "Language";
 
     public static readonly float MinDistance = (10f / 25.4f) * Screen.dpi;
+
+    // 발판 최대 개수
+    public static readonly int FloorCount = 10;
 }
 
 public enum eUI
@@ -45,7 +48,9 @@ public enum eDirection
 
 public enum  ePosition
 {
+    LeftDrop,
     Left,
     Mid,
-    Right
+    Right,
+    RightDrop
 }

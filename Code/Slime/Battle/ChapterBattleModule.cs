@@ -7,8 +7,6 @@ public class ChapterBattleModule : BattleModule
 {
     #region Member Property
     private string m_ChapterKey = string.Empty;
-    private int m_CurrentFloor = 1;
-    private int m_MaxFloor = -1;
     private Dictionary <int, List<ChapPlace>> m_ChapterPlace = new Dictionary<int, List<ChapPlace>>();
     #endregion
 
@@ -32,38 +30,61 @@ public class ChapterBattleModule : BattleModule
 
     public override async UniTask LoadResources()
     {
+        // Window Load
         var Window = await UIManager.Instance.Open<InGameWindow>(eUI.Main, "Assets/AddressableResources/UI/Scene/GameWindow.prefab", true);
         await Window.InitWindow(m_ChapterKey);
 
+        // Floor Load
         var Obj = await ResourceManager.Instance.LoadResourceAsync<GameObject>("Assets/AddressableResources/UI/InGame/Floor.prefab", true);
-        for (int Count = 0; Count < 7; Count++)
+        for (int Count = 0; Count < ClientDefine.FloorCount; Count++)
         {
             var FloorObj = GameObject.Instantiate(Obj, Vector3.zero, Quaternion.identity);
             FloorObj.transform.SetParent(Obj_Floor.transform);
 
             var RectTrans = FloorObj.GetComponent<RectTransform>();
-            RectTrans.offsetMin = Vector2.zero;
-            RectTrans.offsetMax = Vector2.zero;
-            RectTrans.anchoredPosition = new Vector3(0, Count * 300, 0);
-            RectTrans.sizeDelta = new Vector2(RectTrans.sizeDelta.x, 300f);
+            RectTrans.position = new Vector3(0, Count * 300, 0);
 
             var Floor = FloorObj.GetComponent<Floor>();
-            m_Floors.Enqueue(Floor);
+            Floor.SetFloor(m_ChapterPlace[Count + 1]);
+            m_Floors.Add(Floor);
         }
         ResourceManager.Instance.ReleaseResource(Obj, true);
 
+        // Player Load
         Obj = await ResourceManager.Instance.LoadResourceAsync<GameObject>("Assets/AddressableResources/UI/InGame/Player.prefab", true);
         var PlayerObj = GameObject.Instantiate(Obj, Vector3.zero, Quaternion.identity);
         PlayerObj.transform.SetParent(Obj_Character.transform);
         m_Player = PlayerObj.GetComponent<Player>();
-        m_Player.Position = ePosition.Mid;
         m_Player.transform.position = Obj_Mid.transform.position;
         ResourceManager.Instance.ReleaseResource(Obj, true);
+    }
+
+    protected override async UniTask JumpActionAsync()
+    {
+        await base.JumpActionAsync();
+
+        var Floor = m_Floors.Last();
+
+        if (m_FloorCount + ClientDefine.FloorCount - 1 <= m_MaxFloor)
+            Floor.SetFloor(m_ChapterPlace[m_FloorCount + ClientDefine.FloorCount - 1]);
+        else
+            Floor.SetFloor(null);
     }
 
     public override async UniTask StartGame()
     {
         await base.StartGame();
+    }
+
+    public override bool IsMoveable(ePosition position)
+    {
+        if (m_MaxFloor == m_FloorCount)
+        {
+            return false;
+        }
+
+        var NextFloor= m_ChapterPlace[m_FloorCount + 1];
+        return NextFloor.Exists(Data => Data.HrPos == position.ToString());
     }
     #endregion
 }

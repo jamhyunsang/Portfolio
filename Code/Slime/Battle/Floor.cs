@@ -19,7 +19,7 @@ public class Floor : MonoBehaviour
     #endregion
 
     #region Member Method
-    public void Init()
+    private void Init()
     {
         Obj_Left.SetActive(false);
         Obj_Mid.SetActive(false);
@@ -28,6 +28,13 @@ public class Floor : MonoBehaviour
 
     public void SetFloor(List<ChapPlace> chapPlaces)
     {
+        Init();
+
+        if (chapPlaces == null)
+        {
+            return;
+        }
+
         m_ChapPlaces = chapPlaces;
         foreach(var ChapPlace in m_ChapPlaces)
         {

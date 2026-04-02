@@ -51,7 +51,7 @@ public class InGameWindow_Game : MonoBehaviour, IPointerDownHandler, IPointerUpH
         m_PointerId = eventData.pointerId;
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public async void OnPointerUp(PointerEventData eventData)
     {
         if (BattleModule.Instance.IsJumping)
             return;
@@ -64,7 +64,7 @@ public class InGameWindow_Game : MonoBehaviour, IPointerDownHandler, IPointerUpH
 
         m_EndPos = eventData.position;
 
-        BattleModule.Instance.Jump(m_StartPos, m_EndPos);
+        await BattleModule.Instance.Jump(m_StartPos, m_EndPos);
 
         m_IsPointDown = false;
     }

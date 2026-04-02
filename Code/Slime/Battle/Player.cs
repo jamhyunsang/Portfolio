@@ -25,8 +25,6 @@ public class Player : MonoBehaviour
     {
         get { return m_Speed; }
     }
-
-    public ePosition Position { get; set; }
     #endregion
 
     #region Member Method

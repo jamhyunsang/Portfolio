@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -34,7 +33,7 @@ public class BattleModule : MonoBehaviour
 
     #region Member Property
     protected Player m_Player = null;
-    protected Queue<Floor> m_Floors;
+    protected List<Floor> m_Floors;
 
     protected GameObject Obj_Left = null;
     protected GameObject Obj_Mid = null;
@@ -42,6 +41,11 @@ public class BattleModule : MonoBehaviour
 
     protected GameObject Obj_Character = null;
     protected GameObject Obj_Floor = null;
+
+    protected ePosition m_Position = ePosition.Mid;
+
+    protected int m_FloorCount = 1;
+    protected int m_MaxFloor = -1;
 
     protected bool m_IsJumping = false;
     public bool IsJumping
@@ -55,7 +59,7 @@ public class BattleModule : MonoBehaviour
     #region Override Method
     public virtual async UniTask Init()
     {
-        m_Floors = new Queue<Floor>();
+        m_Floors = new List<Floor>();
     }
 
     public virtual async UniTask LoadResources()
@@ -91,53 +95,76 @@ public class BattleModule : MonoBehaviour
         Obj_Floor = floor;
     }
 
-    public void Jump(Vector3 start, Vector3 end)
+    public async UniTask Jump(Vector3 start, Vector3 end)
     {
         var Direction = GetDirection(start, end);
-        Debug.Log($"{Direction}");
 
         if (Direction == eDirection.None)
             return;
 
-        StartCoroutine(Routine_Jump(Direction));
-    }
-
-    public IEnumerator Routine_Jump(eDirection direction)
-    {
         m_IsJumping = true;
 
-        var StartX = m_Player.transform.position.x;
-        var EndX = 0f;
-
-        switch (direction)
+        switch (Direction)
         {
-            case eDirection.Up:
-                {
-                    EndX = Obj_Mid.transform.position.x;
-                }
-                break;
             case eDirection.Right:
                 {
-                    EndX = Obj_Right.transform.position.x;
+                    m_Position++;
+                    if (m_Position >= ePosition.RightDrop)
+                    {
+                        m_Position = ePosition.RightDrop;
+                    }
                 }
                 break;
             case eDirection.Left:
                 {
-                    EndX = Obj_Left.transform.position.x;
+                    m_Position--;
+                    if (m_Position <= ePosition.LeftDrop)
+                    {
+                        m_Position = ePosition.LeftDrop;
+                    }
                 }
                 break;
         }
+
+        if (m_Position == ePosition.LeftDrop || m_Position == ePosition.RightDrop)
+        {
+            Debug.Log("GameOver");
+        }
+        else
+        {
+            if (IsMoveable(m_Position))
+            {
+                // 점프
+                await JumpActionAsync();
+                // 아이템 사용
+            }
+            else
+            {
+                Debug.Log("NoJump");
+                // 이동 불가능한 위치로 점프 시도 시 처리 애니메이션
+            }
+        }
+
+        m_IsJumping = false;
+    }
+
+    // 점프 로직 다음 발판 설정까지 해주기
+    protected virtual async UniTask JumpActionAsync()
+    {
+        var StartX = m_Player.transform.position.x;
+        var EndX = GetPositionX(m_Position);
 
         float Elapsed = 0f;
         float Duration = 1f * (1f - m_Player.Speed);
         float UpDuration = Duration * 0.75f;
         float DownDuration = Duration * 0.25f;
-        var Floors = m_Floors.ToList();
-        List<float> StartYs = Floors.Select((f, i) => i * 300f).ToList();
+        List<float> StartYs = m_Floors.Select((f, i) => i * 300f).ToList();
 
         while (Elapsed < Duration)
         {
             Elapsed += Time.deltaTime;
+            
+            // 발판 이동
             float currentY;
 
             if (Elapsed < UpDuration)
@@ -151,24 +178,35 @@ public class BattleModule : MonoBehaviour
                 currentY = Mathf.Lerp(-450f, -300f, Time);
             }
 
-            for (int Count = 0; Count < Floors.Count; Count++)
+            for (int Count = 0; Count < m_Floors.Count; Count++)
             {
-                Vector3 pos = Floors[Count].transform.position;
-                pos.y = StartYs[Count] + currentY;
-                Floors[Count].transform.position = new Vector3(pos.x, pos.y, pos.z);
+                m_Floors[Count].transform.position = new Vector3(0, StartYs[Count] + currentY, 0);
             }
 
-            Vector3 PlayerPos = m_Player.transform.position;
-            PlayerPos.x = Mathf.Lerp(StartX, EndX, Elapsed / Duration);
-            m_Player.transform.position = new Vector3(PlayerPos.x, PlayerPos.y, PlayerPos.z);
+            // 플레이어 이동
+            m_Player.transform.position = new Vector3(Mathf.Lerp(StartX, EndX, Elapsed / Duration), m_Player.transform.position.y, 0);
 
-            yield return null;
+            await UniTask.Yield();
         }
 
-        m_IsJumping = false;
+        // 이동 완료 후 처리
+        // 발판
+        var Floor = m_Floors.First();
+        m_Floors.RemoveAt(0);
+        m_Floors.Add(Floor);
+
+        for (int Count = 0; Count < m_Floors.Count; Count++)
+        {
+            m_Floors[Count].transform.position = new Vector3(0, Count * 300, 0);
+        }
+
+        // 플레이어
+        m_Player.transform.position = new Vector3(EndX, m_Player.transform.position.y, 0);
+
+        m_FloorCount++;
     }
 
-    public eDirection GetDirection(Vector2 start, Vector2 end)
+    private eDirection GetDirection(Vector2 start, Vector2 end)
     {
         var Direction = end - start;
         
@@ -186,6 +224,27 @@ public class BattleModule : MonoBehaviour
         {
             return Y > 0 ? eDirection.Up : eDirection.None;
         }
+    }
+
+    private float GetPositionX(ePosition position)
+    {
+        switch (position)
+        {
+            case ePosition.LeftDrop:
+            case ePosition.Left:
+                return Obj_Left.transform.position.x;
+            case ePosition.Mid:
+                return Obj_Mid.transform.position.x;
+            case ePosition.Right:
+            case ePosition.RightDrop:
+                return Obj_Right.transform.position.x;
+        }
+        return 0f;
+    }
+
+    public virtual bool IsMoveable(ePosition position)
+    {
+        return true;
     }
     #endregion
 }
