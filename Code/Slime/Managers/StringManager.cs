@@ -25,7 +25,7 @@ public class StringManager : Singleton<StringManager>
 
     public async UniTask LoadClientString()
     {
-        var STRText = await ResourceManager.Instance.LoadResourceAsync<TextAsset>($"Data/STR/STR_{CurrentLanguage}", false);
+        var STRText = await ResourceLoader.LoadResourceAsync<TextAsset>($"Data/STR/STR_{CurrentLanguage}", false);
 
         if (STRText == null)
         {
@@ -41,7 +41,7 @@ public class StringManager : Singleton<StringManager>
 
     public async UniTask LoadAddressableString()
     {
-        var STRText = await ResourceManager.Instance.LoadResourceAsync<TextAsset>($"Assets/AddressableResources/Data/STR/STR_{CurrentLanguage}", true);
+        var STRText = await ResourceLoader.LoadResourceAsync<TextAsset>($"Data/STR/STR_{CurrentLanguage}", true);
         if (STRText == null)
         {
             Debug.LogError($"Failed to load addressable string data for language: {CurrentLanguage}");

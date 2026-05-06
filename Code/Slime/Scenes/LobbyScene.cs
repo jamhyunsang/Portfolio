@@ -11,7 +11,7 @@ public class LobbyScene : MonoBehaviour
         UIManager.Instance.SetRoot(m_Root);
         UIManager.Instance.SwitchRoot();
 
-        await UIManager.Instance.Open<LobbyWindow>(eUI.Main, "Assets/AddressableResources/UI/Scene/LobbyWindow.prefab", true);
+        await UIManager.Instance.Open<LobbyWindow>(eUI.Main, "UI/Scene/LobbyWindow.prefab", true);
 
         await UIManager.Instance.Close<LoadingWindow>();
     }

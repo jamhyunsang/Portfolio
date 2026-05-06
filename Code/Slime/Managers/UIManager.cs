@@ -57,7 +57,7 @@ public class UIManager : Singleton<UIManager>
             return null;
         }
 
-        var Element = await ResourceManager.Instance.LoadResourceAsync<GameObject>(resourcePath, isAddressable);
+        var Element = await ResourceLoader.LoadResourceAsync<GameObject>(resourcePath, isAddressable);
         if (Element == null)
         {
             Debug.LogError($"Failed to load UI Element from {resourcePath}.");
@@ -71,7 +71,7 @@ public class UIManager : Singleton<UIManager>
             return null;
         }
 
-        ResourceManager.Instance.ReleaseResource(Element, isAddressable);
+        ResourceLoader.ReleaseResource(Element, isAddressable);
 
         var UIElement = Obj.GetComponent<T>();
         if (UIElement == null)

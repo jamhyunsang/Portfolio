@@ -58,7 +58,7 @@ public class TitleWindow : UIElement
     #region GameTable
     private async UniTask LoadGameTable()
     {
-        await DataManager.Instance.Load();
+        await DataManager.Load();
         NextStep();
     }
     #endregion

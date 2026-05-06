@@ -13,7 +13,6 @@ public class GameManager : Singleton<GameManager>
     #region Member Method
     private void CreateManagers()
     {
-        _ = DataManager.Instance;
         _ = SoundManager.Instance;
         _ = UIManager.Instance;
     }

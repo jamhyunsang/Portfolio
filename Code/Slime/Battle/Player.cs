@@ -37,14 +37,18 @@ public class Player : MonoBehaviour
     {
         m_Health -= value;
         if (m_Health < 0)
+        {
             m_Health = 0;
+
+            BattleModule.Instance.EndGame();
+        }
     }
 
     public void Heal(int value)
     {
         m_Health += value;
-        if (m_Health > 100)
-            m_Health = 100;
+        if (m_Health > m_MaxHealth)
+            m_Health = m_MaxHealth;
     }
     #endregion
 }

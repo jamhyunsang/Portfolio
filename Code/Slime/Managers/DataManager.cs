@@ -4,27 +4,20 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DataManager : Singleton<DataManager>
+public static class DataManager
 {
     #region Member Property
-    private Dictionary<eTableType, object> m_GameTable = null;
-    #endregion
-
-    #region Override Method
-    protected override void Init()
-    {
-        m_GameTable = new Dictionary<eTableType, object>();
-    }
+    private static IReadOnlyDictionary<eTableType, object> m_GameTable = new Dictionary<eTableType, object>();
     #endregion
 
     #region Member Method
-    public async UniTask Load()
+    public static async UniTask Load()
     {
         JArray Arr = new JArray();
 
         for (eTableType Type = 0; Type < eTableType.End; Type++)
         {
-            TextAsset TableBytes = await ResourceManager.Instance.LoadResourceAsync<TextAsset>($"Data/Table/{Type.ToString()}", false);
+            TextAsset TableBytes = await ResourceLoader.LoadResourceAsync<TextAsset>($"Data/Table/{Type.ToString()}", false);
             var TableDecrypt = Util.Decrypt(TableBytes.bytes);
             var TableDeCompress = Util.DeCompress(TableDecrypt);
 
@@ -38,11 +31,11 @@ public class DataManager : Singleton<DataManager>
         m_GameTable = GameTable.Parse(Arr);
     }
 
-    public List<T> GetTable<T>(eTableType gameTable) where T : GameTable
+    public static List<T> GetTable<T>(eTableType gameTable) where T : GameTable
     {
         if (m_GameTable.ContainsKey(gameTable))
         {
-                return m_GameTable[gameTable] as List<T>;
+            return m_GameTable[gameTable] as List<T>;
         }
         else
         {
@@ -51,7 +44,7 @@ public class DataManager : Singleton<DataManager>
         }
     }
 
-    public List<JObject> GetTable(string tableName)
+    public static List<JObject> GetTable(string tableName)
     {
         eTableType type = Enum.Parse<eTableType>(tableName);
 
